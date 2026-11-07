@@ -26,7 +26,7 @@ interface ChatShortcutsInput {
   readonly enabled: boolean;
   /**
    * A side chat inside another chat leaves the window to the outer chat. It runs only
-   * composer chords, for keys pressed inside `composerElement`.
+   * composer and approval chords, for keys pressed inside `composerElement`.
    */
   readonly embedded?: boolean;
   readonly composerElement?: HTMLElement | null;
@@ -114,7 +114,11 @@ export function useChatShortcuts(input: ChatShortcutsInput) {
       context: input.getShortcutContext(event.target),
     });
     const run = command
-      ? composerShortcutCommands(input.composerRef, input.branchToolbarRef)[command]
+      ? command === "approval.approve" || command === "approval.decline"
+        ? input.enabled
+          ? input.commands[command]
+          : undefined
+        : composerShortcutCommands(input.composerRef, input.branchToolbarRef)[command]
       : undefined;
     if (!run || run({ event, terminalFocusOwner: null }) === false) return;
     event.preventDefault();

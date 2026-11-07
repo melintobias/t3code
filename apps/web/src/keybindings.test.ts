@@ -426,6 +426,58 @@ describe("model picker navigation helpers", () => {
 });
 
 describe("chat/editor shortcuts", () => {
+  it.each([
+    ["s", true, false, "thread.settle"],
+    ["y", false, true, "approval.approve"],
+    ["d", false, true, "approval.decline"],
+    ["n", false, true, "chat.newWithoutProject"],
+  ] as const)("resolves %s without taking terminal input", (key, shiftKey, altKey, command) => {
+    for (const platform of ["MacIntel", "Win32", "Linux"]) {
+      const chord = event({
+        key,
+        shiftKey,
+        altKey,
+        metaKey: platform === "MacIntel",
+        ctrlKey: platform !== "MacIntel",
+      });
+      assert.strictEqual(
+        resolveShortcutCommand(chord, DEFAULT_RESOLVED_KEYBINDINGS, {
+          platform,
+          context: { terminalFocus: false },
+        }),
+        command,
+      );
+      assert.isNull(
+        resolveShortcutCommand(chord, DEFAULT_RESOLVED_KEYBINDINGS, {
+          platform,
+          context: { terminalFocus: true },
+        }),
+      );
+    }
+  });
+
+  it("preserves a custom approval shortcut when defaults are added", () => {
+    const bindings = mergeWithDefaultKeybindings(
+      compile([
+        {
+          shortcut: modShortcut("y", { shiftKey: true }),
+          command: "approval.approve",
+          whenAst: whenNot(whenIdentifier("terminalFocus")),
+        },
+      ]),
+    );
+    assert.strictEqual(
+      resolveShortcutCommand(event({ key: "y", ctrlKey: true, shiftKey: true }), bindings, {
+        platform: "Linux",
+      }),
+      "approval.approve",
+    );
+    assert.isNull(
+      resolveShortcutCommand(event({ key: "y", ctrlKey: true, altKey: true }), bindings, {
+        platform: "Linux",
+      }),
+    );
+  });
   it("toggles the thread panel by default without taking terminal keystrokes", () => {
     for (const platform of ["MacIntel", "Win32", "Linux"]) {
       const input = event({

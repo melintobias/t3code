@@ -155,6 +155,16 @@ a shortcut.
 
 ## Commands with special behavior
 
+`thread.settle` (`mod+shift+s`) settles the current thread, or un-settles it if
+already settled.
+
+`approval.approve` (`mod+alt+y`) approves the oldest pending approval in the
+focused thread once. `approval.decline` (`mod+alt+d`) declines it. They do
+nothing if the request is already being answered, cannot be resumed, or does
+not offer that decision. Holding a shortcut does not answer further requests.
+In a side chat, use the shortcut from its composer. Change either shortcut in
+**Settings → Keybindings**; terminals keep their own input by default.
+
 `thread.stop` interrupts the running turn in the focused thread. It has no default
 shortcut; assign one in **Settings → Keybindings**.
 

@@ -141,13 +141,15 @@ const ctrlShift = (key: string, command: KeybindingCommand) => ({
 const sideChatKeybindings: ResolvedKeybindingsConfig = [
   ctrlShift("m", "modelPicker.toggle"),
   ctrlShift("x", "thread.stop"),
+  ctrlShift("y", "approval.approve"),
+  ctrlShift("n", "approval.decline"),
 ];
 
-// A side chat in the main chat's panel: no window listeners, only its composer's own chords.
-function SideChat(props: { toggles: string[]; stops: string[] }) {
+// A side chat in the main chat's panel handles only composer and approval chords.
+function SideChat(props: { toggles: string[]; stops: string[]; approvals: string[] }) {
   const [composerElement, setComposerElement] = useState<HTMLDivElement | null>(null);
   useChatShortcuts({
-    enabled: false,
+    enabled: true,
     embedded: true,
     composerElement,
     keybindings: sideChatKeybindings,
@@ -161,7 +163,11 @@ function SideChat(props: { toggles: string[]; stops: string[] }) {
     },
     branchToolbarRef: { current: null },
     closeThreadFind: () => {},
-    commands: { "thread.stop": () => void props.stops.push("stop") },
+    commands: {
+      "thread.stop": () => void props.stops.push("stop"),
+      "approval.approve": () => void props.approvals.push("accept"),
+      "approval.decline": () => void props.approvals.push("decline"),
+    },
     fallback: () => undefined,
   });
   return (
@@ -174,16 +180,21 @@ function SideChat(props: { toggles: string[]; stops: string[] }) {
   );
 }
 
-it("runs a side chat's composer chords only from its composer, and never thread commands", async () => {
+it("keeps side chat composer and approval chords local without running thread commands", async () => {
   const toggles: string[] = [];
   const stops: string[] = [];
-  await using screen = await render(<SideChat toggles={toggles} stops={stops} />, options);
+  const approvals: string[] = [];
+  await using screen = await render(
+    <SideChat toggles={toggles} stops={stops} approvals={approvals} />,
+    options,
+  );
 
   await userEvent.click(screen.getByLabelText("Side chat composer"));
-  await userEvent.keyboard("{Control>}{Shift>}MX{/Shift}{/Control}");
+  await userEvent.keyboard("{Control>}{Shift>}MXYN{/Shift}{/Control}");
   await userEvent.click(screen.getByLabelText("Main composer"));
-  await userEvent.keyboard("{Control>}{Shift>}M{/Shift}{/Control}");
+  await userEvent.keyboard("{Control>}{Shift>}MYN{/Shift}{/Control}");
 
   expect(toggles).toEqual(["model"]);
   expect(stops).toEqual([]);
+  expect(approvals).toEqual(["accept", "decline"]);
 });

@@ -161,6 +161,12 @@ a shortcut.
 
 ## Commands with special behavior
 
+`approval.approve` and `approval.decline` answer the oldest pending approval in
+the focused thread. They have no default shortcut; assign them in
+**Settings → Keybindings**. Approve never picks an always-allow option. In a
+side chat, use them from its composer. Answer subagent approval requests shown
+in the parent conversation with their buttons.
+
 `thread.stop` interrupts the running turn in the focused thread. It has no default
 shortcut; assign one in **Settings → Keybindings**.
 

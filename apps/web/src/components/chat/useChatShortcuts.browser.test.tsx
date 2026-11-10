@@ -141,15 +141,17 @@ const ctrlShift = (key: string, command: KeybindingCommand) => ({
 const sideChatKeybindings: ResolvedKeybindingsConfig = [
   ctrlShift("m", "modelPicker.toggle"),
   ctrlShift("x", "thread.stop"),
+  ctrlShift("y", "approval.approve"),
 ];
 
 // A side chat in the main chat's panel: no window listeners, only its composer's own chords.
-function SideChat(props: { toggles: string[]; stops: string[] }) {
+function SideChat(props: { toggles: string[]; stops: string[]; approvals: string[] }) {
   const [composerElement, setComposerElement] = useState<HTMLDivElement | null>(null);
   useChatShortcuts({
     enabled: false,
     embedded: true,
     composerElement,
+    embeddedCommands: { "approval.approve": () => void props.approvals.push("approve") },
     keybindings: sideChatKeybindings,
     scriptKeybindings: [],
     getShortcutContext: () => shortcutContext,
@@ -174,16 +176,21 @@ function SideChat(props: { toggles: string[]; stops: string[] }) {
   );
 }
 
-it("runs a side chat's composer chords only from its composer, and never thread commands", async () => {
+it("runs a side chat's composer chords and embedded commands only from its composer, and never thread commands", async () => {
   const toggles: string[] = [];
   const stops: string[] = [];
-  await using screen = await render(<SideChat toggles={toggles} stops={stops} />, options);
+  const approvals: string[] = [];
+  await using screen = await render(
+    <SideChat toggles={toggles} stops={stops} approvals={approvals} />,
+    options,
+  );
 
   await userEvent.click(screen.getByLabelText("Side chat composer"));
-  await userEvent.keyboard("{Control>}{Shift>}MX{/Shift}{/Control}");
+  await userEvent.keyboard("{Control>}{Shift>}MXY{/Shift}{/Control}");
   await userEvent.click(screen.getByLabelText("Main composer"));
-  await userEvent.keyboard("{Control>}{Shift>}M{/Shift}{/Control}");
+  await userEvent.keyboard("{Control>}{Shift>}MY{/Shift}{/Control}");
 
   expect(toggles).toEqual(["model"]);
   expect(stops).toEqual([]);
+  expect(approvals).toEqual(["approve"]);
 });

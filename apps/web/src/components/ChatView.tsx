@@ -40,6 +40,7 @@ import { useStableCallback } from "../hooks/useStableCallback";
 import { useProjectScriptEditing } from "./chat/useProjectScriptEditing";
 import { RightPanelSurfaceContent } from "./chat/RightPanelSurfaceContent";
 import { usePendingThreadRequests } from "./chat/usePendingThreadRequests";
+import { approvalShortcutCommands } from "./chat/approvalShortcuts";
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 import type { UsageLimitSourceSnapshots } from "@t3tools/contracts";
@@ -1360,6 +1361,14 @@ export default function ChatView(props: ChatViewProps) {
   );
   const onHeldRequestIdsChange = useStableCallback((requestIds: ReadonlySet<string>) => {
     setHeldApprovalRequestIds((current) => (shallow(current, requestIds) ? current : requestIds));
+  });
+  const approvalShortcuts = approvalShortcutCommands({
+    // A maximized panel hides the chat column, so the approval is not shown.
+    approval: rightPanelMaximized ? null : activePendingApproval,
+    heldRequestIds: heldApprovalRequestIds,
+    canOperateThread,
+    respondingRequestIds,
+    onRespondToApproval: onRespondToApprovalStable,
   });
   // Answering an approval or question on any client resumes quota spending, so include it in the key.
   const usageLimitsKey =
@@ -2687,6 +2696,7 @@ export default function ChatView(props: ChatViewProps) {
     enabled: activeThreadId !== null && !backgroundThread,
     embedded,
     composerElement: composerOverlayElement,
+    embeddedCommands: approvalShortcuts,
     keybindings,
     scriptKeybindings,
     getShortcutContext,
@@ -2701,6 +2711,7 @@ export default function ChatView(props: ChatViewProps) {
       ...terminalShortcuts,
       ...rightPanelShortcuts,
       ...threadLifecycleShortcuts,
+      ...approvalShortcuts,
       "thread.copyReference": ({ event }) => {
         if (!event.repeat) copyActiveThreadReference();
       },

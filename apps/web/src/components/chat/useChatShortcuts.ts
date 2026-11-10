@@ -26,10 +26,11 @@ interface ChatShortcutsInput {
   readonly enabled: boolean;
   /**
    * A side chat inside another chat leaves the window to the outer chat. It runs only
-   * composer chords, for keys pressed inside `composerElement`.
+   * composer chords and `embeddedCommands`, for keys pressed inside `composerElement`.
    */
   readonly embedded?: boolean;
   readonly composerElement?: HTMLElement | null;
+  readonly embeddedCommands?: ChatShortcutCommands;
   readonly keybindings: ResolvedKeybindingsConfig;
   readonly scriptKeybindings: ResolvedKeybindingsConfig;
   readonly getShortcutContext: (target: EventTarget | null) => ShortcutMatchContext & {
@@ -114,7 +115,8 @@ export function useChatShortcuts(input: ChatShortcutsInput) {
       context: input.getShortcutContext(event.target),
     });
     const run = command
-      ? composerShortcutCommands(input.composerRef, input.branchToolbarRef)[command]
+      ? (input.embeddedCommands?.[command] ??
+        composerShortcutCommands(input.composerRef, input.branchToolbarRef)[command])
       : undefined;
     if (!run || run({ event, terminalFocusOwner: null }) === false) return;
     event.preventDefault();
